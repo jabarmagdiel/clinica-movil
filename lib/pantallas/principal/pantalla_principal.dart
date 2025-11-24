@@ -5,6 +5,7 @@ import '../medicos/pantalla_buscar_medico.dart';
 import '../historia_clinica/pantalla_historia_clinica.dart';
 import '../consentimientos/pantalla_consentimientos.dart';
 import '../perfil/pantalla_perfil.dart';
+import '../notificaciones/pantalla_notificaciones.dart';
 import '../autenticacion/pantalla_login.dart';
 
 class PantallaPrincipal extends StatelessWidget {
@@ -70,6 +71,11 @@ class PantallaPrincipal extends StatelessWidget {
                     icon: Icons.assignment,
                     label: "Consentimientos",
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PantallaConsentimientos())),
+                  ),
+                  _OpcionPrincipal(
+                    icon: Icons.notifications,
+                    label: "Notificaciones",
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PantallaNotificaciones())),
                   ),
                   _OpcionPrincipal(
                     icon: Icons.person,

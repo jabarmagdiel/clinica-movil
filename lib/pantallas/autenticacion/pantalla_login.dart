@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../api.dart';
+import '../../servicios/servicio_notificaciones.dart';
 import 'pantalla_registro.dart';
 import '../principal/pantalla_principal.dart';
 
@@ -40,6 +41,9 @@ class _PantallaLoginState extends State<PantallaLogin> {
 
     if (!mounted) return;
     if (res['ok'] == true) {
+      // Registrar dispositivo para notificaciones push después del login
+      await ServicioNotificaciones.registrarDispositivoDespuesLogin();
+      
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('¡Bienvenido!')),
       );

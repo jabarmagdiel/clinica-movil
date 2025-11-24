@@ -41,6 +41,13 @@ dependencies:
   share_plus: ^10.1.2
   cross_file: ^0.3.4
   intl: ^0.19.0
+  
+  # Dependencias para notificaciones Firebase
+  firebase_core: ^2.24.2
+  firebase_messaging: ^14.7.10
+  flutter_local_notifications: ^17.2.3
+  timezone: ^0.9.2
+  device_info_plus: ^10.1.2
 
 
 dev_dependencies:

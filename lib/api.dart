@@ -677,3 +677,167 @@ class ApiConsentimientos {
   }
 }
 
+/// =================== NOTIFICACIONES ===================
+class ApiNotificaciones {
+  // URLs
+  static Uri _notificacionesUrl() => Uri.parse('$kBaseUrl/api/notificaciones/');
+  static Uri _notificacionById(int id) => Uri.parse('$kBaseUrl/api/notificaciones/$id/');
+  static Uri _marcarLeidaUrl(int id) => Uri.parse('$kBaseUrl/api/notificaciones/$id/marcar_leida/');
+  static Uri _marcarTodasLeidasUrl() => Uri.parse('$kBaseUrl/api/notificaciones/marcar_todas_leidas/');
+  static Uri _contarNoLeidasUrl() => Uri.parse('$kBaseUrl/api/notificaciones/contar_no_leidas/');
+  static Uri _registrarDispositivoUrl() => Uri.parse('$kBaseUrl/api/dispositivos/registrar/');
+
+  /// Lista notificaciones del usuario
+  static Future<Map<String, dynamic>> listar({
+    String? tipo, // 'cita', 'resultado', 'general'
+    bool? leida,
+    int? page,
+  }) async {
+    final token = await storage.read(key: 'access');
+    if (token == null) return {'ok': false, 'error': 'No autenticado'};
+
+    final queryParams = <String, String>{};
+    if (tipo != null) queryParams['tipo'] = tipo;
+    if (leida != null) queryParams['leida'] = leida.toString();
+    if (page != null) queryParams['page'] = page.toString();
+
+    final uri = _notificacionesUrl().replace(queryParameters: queryParams);
+    
+    try {
+      final resp = await http.get(uri, headers: {
+        'Authorization': 'Bearer $token',
+      }).timeout(const Duration(seconds: 10));
+
+      if (resp.statusCode == 200) {
+        final data = jsonDecode(resp.body);
+        return {
+          'ok': true,
+          'data': data is Map ? (data['results'] ?? []) : data,
+          'count': data is Map ? (data['count'] ?? 0) : (data as List).length,
+          'next': data is Map ? data['next'] : null,
+          'previous': data is Map ? data['previous'] : null,
+        };
+      }
+      return {'ok': false, 'error': 'Error (${resp.statusCode}): ${resp.body}'};
+    } catch (e) {
+      return {'ok': false, 'error': 'Error de conexión: $e'};
+    }
+  }
+
+  /// Marca una notificación como leída
+  static Future<Map<String, dynamic>> marcarComoLeida(int notificacionId) async {
+    final token = await storage.read(key: 'access');
+    if (token == null) return {'ok': false, 'error': 'No autenticado'};
+
+    try {
+      final resp = await http.post(
+        _marcarLeidaUrl(notificacionId),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      ).timeout(const Duration(seconds: 10));
+
+      if (resp.statusCode == 200 || resp.statusCode == 201) {
+        return {'ok': true, 'data': jsonDecode(resp.body)};
+      }
+      return {'ok': false, 'error': 'Error (${resp.statusCode}): ${resp.body}'};
+    } catch (e) {
+      return {'ok': false, 'error': 'Error de conexión: $e'};
+    }
+  }
+
+  /// Marca todas las notificaciones como leídas
+  static Future<Map<String, dynamic>> marcarTodasComoLeidas() async {
+    final token = await storage.read(key: 'access');
+    if (token == null) return {'ok': false, 'error': 'No autenticado'};
+
+    try {
+      final resp = await http.post(
+        _marcarTodasLeidasUrl(),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      ).timeout(const Duration(seconds: 10));
+
+      if (resp.statusCode == 200 || resp.statusCode == 201) {
+        return {'ok': true, 'data': jsonDecode(resp.body)};
+      }
+      return {'ok': false, 'error': 'Error (${resp.statusCode}): ${resp.body}'};
+    } catch (e) {
+      return {'ok': false, 'error': 'Error de conexión: $e'};
+    }
+  }
+
+  /// Cuenta las notificaciones no leídas
+  static Future<Map<String, dynamic>> contarNoLeidas() async {
+    final token = await storage.read(key: 'access');
+    if (token == null) return {'ok': false, 'error': 'No autenticado'};
+
+    try {
+      final resp = await http.get(
+        _contarNoLeidasUrl(),
+        headers: {'Authorization': 'Bearer $token'},
+      ).timeout(const Duration(seconds: 10));
+
+      if (resp.statusCode == 200) {
+        return {'ok': true, 'data': jsonDecode(resp.body)};
+      }
+      return {'ok': false, 'error': 'Error (${resp.statusCode}): ${resp.body}'};
+    } catch (e) {
+      return {'ok': false, 'error': 'Error de conexión: $e'};
+    }
+  }
+
+  /// Elimina una notificación
+  static Future<Map<String, dynamic>> eliminar(int notificacionId) async {
+    final token = await storage.read(key: 'access');
+    if (token == null) return {'ok': false, 'error': 'No autenticado'};
+
+    try {
+      final resp = await http.delete(
+        _notificacionById(notificacionId),
+        headers: {'Authorization': 'Bearer $token'},
+      ).timeout(const Duration(seconds: 10));
+
+      if (resp.statusCode == 204 || resp.statusCode == 200) {
+        return {'ok': true};
+      }
+      return {'ok': false, 'error': 'Error (${resp.statusCode}): ${resp.body}'};
+    } catch (e) {
+      return {'ok': false, 'error': 'Error de conexión: $e'};
+    }
+  }
+
+  /// Registra un dispositivo para notificaciones FCM
+  static Future<Map<String, dynamic>> registrarDispositivo(String tokenFCM) async {
+    final token = await storage.read(key: 'access');
+    if (token == null) return {'ok': false, 'error': 'No autenticado'};
+
+    final payload = {
+      'token_fcm': tokenFCM,
+      'tipo_dispositivo': 'mobile',
+      'activo': true,
+    };
+
+    try {
+      final resp = await http.post(
+        _registrarDispositivoUrl(),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(payload),
+      ).timeout(const Duration(seconds: 10));
+
+      if (resp.statusCode == 200 || resp.statusCode == 201) {
+        return {'ok': true, 'data': jsonDecode(resp.body)};
+      }
+      return {'ok': false, 'error': 'Error (${resp.statusCode}): ${resp.body}'};
+    } catch (e) {
+      return {'ok': false, 'error': 'Error de conexión: $e'};
+    }
+  }
+}
+

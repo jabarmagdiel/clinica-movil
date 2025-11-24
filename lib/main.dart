@@ -1,9 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:timezone/data/latest.dart' as tz;
+import 'firebase_options.dart';
 import 'api.dart';
 import 'pantallas/autenticacion/pantalla_login.dart';
 import 'pantallas/principal/pantalla_principal.dart';
+import 'servicios/servicio_notificaciones.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Inicializar Firebase
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  
+  // Inicializar timezone
+  tz.initializeTimeZones();
+  
+  // Inicializar servicio de notificaciones
+  await ServicioNotificaciones.inicializar();
+  
+  // Registrar dispositivo para notificaciones push
+  await ServicioNotificaciones.registrarDispositivo();
+  
   runApp(const ClinicaApp());
 }
 
