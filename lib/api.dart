@@ -685,7 +685,7 @@ class ApiNotificaciones {
   static Uri _marcarLeidaUrl(int id) => Uri.parse('$kBaseUrl/api/notificaciones/$id/marcar_leida/');
   static Uri _marcarTodasLeidasUrl() => Uri.parse('$kBaseUrl/api/notificaciones/marcar_todas_leidas/');
   static Uri _contarNoLeidasUrl() => Uri.parse('$kBaseUrl/api/notificaciones/contar_no_leidas/');
-  static Uri _registrarDispositivoUrl() => Uri.parse('$kBaseUrl/api/dispositivos/registrar/');
+  static Uri _registrarDispositivoUrl() => Uri.parse('$kBaseUrl/api/dispositivos/');
 
   /// Lista notificaciones del usuario
   static Future<Map<String, dynamic>> listar({

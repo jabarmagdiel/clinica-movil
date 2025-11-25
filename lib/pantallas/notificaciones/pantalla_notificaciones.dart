@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../api.dart';
+import '../../servicios/servicio_notificaciones.dart';
 
 class PantallaNotificaciones extends StatefulWidget {
   const PantallaNotificaciones({super.key});
@@ -321,6 +322,18 @@ class _PantallaNotificacionesState extends State<PantallaNotificaciones> {
           ],
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications_active),
+            tooltip: 'Probar Notificación Emergente',
+            onPressed: () async {
+              await ServicioNotificaciones.probarNotificacionEmergente();
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Notificación de prueba enviada')),
+                );
+              }
+            },
+          ),
           PopupMenuButton<String>(
             onSelected: (value) {
               if (value == 'marcar_todas_leidas') {

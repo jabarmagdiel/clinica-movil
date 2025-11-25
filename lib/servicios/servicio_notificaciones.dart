@@ -6,6 +6,20 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:io';
 import '../api.dart';
 
+/// Handler para notificaciones en background (debe estar fuera de cualquier clase)
+@pragma('vm:entry-point')
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  print('📱 Notificación recibida en background: ${message.notification?.title}');
+  
+  // Aquí puedes procesar la notificación en background
+  // Por ejemplo, guardar en base de datos local, actualizar badges, etc.
+  
+  // Mostrar notificación local si es necesario
+  if (message.notification != null) {
+    await ServicioNotificaciones.mostrarNotificacionBackground(message);
+  }
+}
+
 class ServicioNotificaciones {
   static final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
   static final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
@@ -20,7 +34,7 @@ class ServicioNotificaciones {
     if (_inicializado) return true;
 
     try {
-      // Solicitar permisos
+      // Solicitar permisos de Firebase
       NotificationSettings settings = await _firebaseMessaging.requestPermission(
         alert: true,
         announcement: false,
@@ -30,6 +44,10 @@ class ServicioNotificaciones {
         provisional: false,
         sound: true,
       );
+
+      // Solicitar permisos de notificaciones locales
+      await _localNotifications.resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>()?.requestNotificationsPermission();
 
       if (settings.authorizationStatus != AuthorizationStatus.authorized) {
         print('❌ Permisos de notificaciones denegados');
@@ -50,6 +68,13 @@ class ServicioNotificaciones {
 
       // Configurar handlers de mensajes
       await _configurarHandlers();
+
+      // Configurar para recibir notificaciones en primer plano
+      await _firebaseMessaging.setForegroundNotificationPresentationOptions(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
 
       // Escuchar cambios de token
       _firebaseMessaging.onTokenRefresh.listen((newToken) {
@@ -95,7 +120,10 @@ class ServicioNotificaciones {
         'clinica_channel',
         'Notificaciones de Clínica',
         description: 'Canal para notificaciones de la aplicación de clínica',
-        importance: Importance.high,
+        importance: Importance.max,
+        playSound: true,
+        enableVibration: true,
+        showBadge: true,
       );
 
       await _localNotifications
@@ -232,8 +260,12 @@ class ServicioNotificaciones {
       'clinica_channel',
       'Notificaciones de Clínica',
       channelDescription: 'Recordatorios de citas y exámenes',
-      importance: Importance.high,
-      priority: Priority.high,
+      importance: Importance.max,
+      priority: Priority.max,
+      enableVibration: true,
+      playSound: true,
+      fullScreenIntent: true,
+      category: AndroidNotificationCategory.reminder,
     );
 
     const DarwinNotificationDetails iOSPlatformChannelSpecifics =
@@ -388,8 +420,12 @@ class ServicioNotificaciones {
       'clinica_channel',
       'Notificaciones de Clínica',
       channelDescription: 'Notificaciones push de la clínica',
-      importance: Importance.high,
-      priority: Priority.high,
+      importance: Importance.max,
+      priority: Priority.max,
+      enableVibration: true,
+      playSound: true,
+      fullScreenIntent: true,
+      category: AndroidNotificationCategory.message,
     );
 
     const DarwinNotificationDetails iosDetails = DarwinNotificationDetails();
@@ -452,4 +488,65 @@ class ServicioNotificaciones {
 
   /// Obtener token FCM actual
   static String? get tokenFCM => _tokenFCM;
+
+  /// Método para probar notificaciones emergentes
+  static Future<void> probarNotificacionEmergente() async {
+    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+      'clinica_channel',
+      'Notificaciones de Clínica',
+      channelDescription: 'Notificación de prueba',
+      importance: Importance.max,
+      priority: Priority.max,
+      enableVibration: true,
+      playSound: true,
+      fullScreenIntent: true,
+      category: AndroidNotificationCategory.message,
+      ticker: 'Notificación de prueba',
+    );
+
+    const DarwinNotificationDetails iosDetails = DarwinNotificationDetails();
+
+    const NotificationDetails platformDetails = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
+
+    await _localNotifications.show(
+      999,
+      '🔔 Prueba de Notificación',
+      'Esta es una notificación de prueba para verificar que aparezca como emergente',
+      platformDetails,
+    );
+  }
+
+  /// Mostrar notificación cuando la app está en background
+  static Future<void> mostrarNotificacionBackground(RemoteMessage message) async {
+    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+      'clinica_channel',
+      'Notificaciones de Clínica',
+      channelDescription: 'Notificaciones push en background',
+      importance: Importance.max,
+      priority: Priority.max,
+      enableVibration: true,
+      playSound: true,
+      fullScreenIntent: true,
+      category: AndroidNotificationCategory.message,
+      ticker: 'Nueva notificación',
+    );
+
+    const DarwinNotificationDetails iosDetails = DarwinNotificationDetails();
+
+    const NotificationDetails platformDetails = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
+
+    await _localNotifications.show(
+      message.hashCode,
+      message.notification?.title ?? 'Notificación',
+      message.notification?.body ?? 'Nueva notificación recibida',
+      platformDetails,
+      payload: message.data.toString(),
+    );
+  }
 }
