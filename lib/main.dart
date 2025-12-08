@@ -25,9 +25,6 @@ void main() async {
   // Inicializar servicio de notificaciones
   await ServicioNotificaciones.inicializar();
   
-  // Registrar dispositivo para notificaciones push
-  await ServicioNotificaciones.registrarDispositivo();
-  
   runApp(const ClinicaApp());
 }
 
