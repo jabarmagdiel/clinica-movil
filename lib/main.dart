@@ -2,32 +2,40 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:timezone/data/latest.dart' as tz;
+
 import 'firebase_options.dart';
+//import './firebase_background_handler.dart'
+//    as fbHandler; // 🔹 Import obligatorio
+//import 'servicios/notification_service.dart';
 import 'api.dart';
 import 'pantallas/autenticacion/pantalla_login.dart';
 import 'pantallas/principal/pantalla_principal.dart';
-import 'servicios/servicio_notificaciones.dart';
+
+import 'servicios/notification_service.dart' as notif;
+
+import 'package:permission_handler/permission_handler.dart';
+import 'dart:io';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // Inicializar Firebase
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // Pedir permisos en Android 13+
+  if (Platform.isAndroid) {
+    var status = await Permission.notification.status;
+    if (!status.isGranted) {
+      await Permission.notification.request();
+    }
+  }
+
+  FirebaseMessaging.onBackgroundMessage(
+    notif.firebaseMessagingBackgroundHandler,
   );
-  
-  // Configurar handler para notificaciones en background
-  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
-  
-  // Inicializar timezone
+
   tz.initializeTimeZones();
-  
-  // Inicializar servicio de notificaciones
-  await ServicioNotificaciones.inicializar();
-  
-  // Registrar dispositivo para notificaciones push
-  await ServicioNotificaciones.registrarDispositivo();
-  
+
+  await notif.NotificationService.initialize();
+
   runApp(const ClinicaApp());
 }
 
@@ -67,6 +75,8 @@ class _AuthGateState extends State<AuthGate> {
     // 1) si hay token damos por logueado
     final token = await storage.read(key: 'access');
     if (token != null) {
+      // 🔔 REGISTRA (o refresca) EL TOKEN FCM
+      await notif.NotificationService.registerDeviceAfterLogin();
       // 2) intentamos /api/me/
       try {
         final res = await ApiAuth.me();

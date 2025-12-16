@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../api.dart';
-import '../../servicios/servicio_notificaciones.dart';
+//import '../../servicios/servicio_notificaciones.dart';
+import '../../servicios/notification_service.dart';
 import 'pantalla_registro.dart';
 import '../principal/pantalla_principal.dart';
 
@@ -42,19 +43,24 @@ class _PantallaLoginState extends State<PantallaLogin> {
     if (!mounted) return;
     if (res['ok'] == true) {
       // Registrar dispositivo para notificaciones push después del login
-      await ServicioNotificaciones.registrarDispositivoDespuesLogin();
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('¡Bienvenido!')),
-      );
+      //ServicioNotificaciones.registrarDispositivoDespuesLogin();
+      await NotificationService.registerDeviceAfterLogin();
+
+      //await ServicioNotificaciones.registrarDispositivo();
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('¡Bienvenido!')));
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const PantallaPrincipal()),
       );
     } else {
-      setState(() => serverError = (res['error'] ?? 'Error desconocido').toString());
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(serverError!)),
+      setState(
+        () => serverError = (res['error'] ?? 'Error desconocido').toString(),
       );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(serverError!)));
     }
   }
 
@@ -89,24 +95,33 @@ class _PantallaLoginState extends State<PantallaLogin> {
                           CircleAvatar(
                             radius: 28,
                             backgroundColor: cs.primaryContainer,
-                            child: Icon(Icons.local_hospital, color: cs.onPrimaryContainer, size: 30),
+                            child: Icon(
+                              Icons.local_hospital,
+                              color: cs.onPrimaryContainer,
+                              size: 30,
+                            ),
                           ),
                           const SizedBox(height: 12),
-                          Text('Iniciar sesión',
-                              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                fontWeight: FontWeight.w700,
-                              )),
+                          Text(
+                            'Iniciar sesión',
+                            style: Theme.of(context).textTheme.headlineSmall
+                                ?.copyWith(fontWeight: FontWeight.w700),
+                          ),
                           const SizedBox(height: 4),
-                          Text('Accede a tu panel de paciente',
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: cs.onSurfaceVariant,
-                              )),
+                          Text(
+                            'Accede a tu panel de paciente',
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(color: cs.onSurfaceVariant),
+                          ),
                           const SizedBox(height: 20),
 
                           // Usuario/Email
                           TextFormField(
                             controller: userCtrl,
-                            autofillHints: const [AutofillHints.username, AutofillHints.email],
+                            autofillHints: const [
+                              AutofillHints.username,
+                              AutofillHints.email,
+                            ],
                             textInputAction: TextInputAction.next,
                             decoration: const InputDecoration(
                               labelText: 'Correo o usuario',
@@ -133,12 +148,18 @@ class _PantallaLoginState extends State<PantallaLogin> {
                               prefixIcon: const Icon(Icons.lock),
                               suffixIcon: IconButton(
                                 tooltip: showPass ? 'Ocultar' : 'Mostrar',
-                                icon: Icon(showPass ? Icons.visibility_off : Icons.visibility),
-                                onPressed: () => setState(() => showPass = !showPass),
+                                icon: Icon(
+                                  showPass
+                                      ? Icons.visibility_off
+                                      : Icons.visibility,
+                                ),
+                                onPressed: () =>
+                                    setState(() => showPass = !showPass),
                               ),
                             ),
                             validator: (v) {
-                              if (v == null || v.isEmpty) return 'Ingresa tu contraseña';
+                              if (v == null || v.isEmpty)
+                                return 'Ingresa tu contraseña';
                               if (v.length < 6) return 'Mínimo 6 caracteres';
                               return null;
                             },
@@ -166,7 +187,9 @@ class _PantallaLoginState extends State<PantallaLogin> {
                             child: FilledButton(
                               onPressed: loading ? null : _submit,
                               child: Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
                                 child: Text(loading ? 'Ingresando…' : 'Entrar'),
                               ),
                             ),
@@ -176,11 +199,14 @@ class _PantallaLoginState extends State<PantallaLogin> {
                             onPressed: loading
                                 ? null
                                 : () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (_) => const PantallaRegistro()),
-                              );
-                            },
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) =>
+                                            const PantallaRegistro(),
+                                      ),
+                                    );
+                                  },
                             child: const Text('Crear cuenta'),
                           ),
                         ],
@@ -212,11 +238,14 @@ class _PantallaLoginState extends State<PantallaLogin> {
                     alignment: Alignment.topRight,
                     child: Padding(
                       padding: const EdgeInsets.all(24),
-                      child: Text('Clínica',
-                          style: Theme.of(context)
-                              .textTheme
-                              .displaySmall
-                              ?.copyWith(color: cs.primary, fontWeight: FontWeight.w800)),
+                      child: Text(
+                        'Clínica',
+                        style: Theme.of(context).textTheme.displaySmall
+                            ?.copyWith(
+                              color: cs.primary,
+                              fontWeight: FontWeight.w800,
+                            ),
+                      ),
                     ),
                   ),
                 content,

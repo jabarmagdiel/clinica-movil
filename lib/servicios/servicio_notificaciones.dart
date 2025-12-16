@@ -9,11 +9,13 @@ import '../api.dart';
 /// Handler para notificaciones en background (debe estar fuera de cualquier clase)
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  print('📱 Notificación recibida en background: ${message.notification?.title}');
-  
+  print(
+    '📱 Notificación recibida en background: ${message.notification?.title}',
+  );
+
   // Aquí puedes procesar la notificación en background
   // Por ejemplo, guardar en base de datos local, actualizar badges, etc.
-  
+
   // Mostrar notificación local si es necesario
   if (message.notification != null) {
     await ServicioNotificaciones.mostrarNotificacionBackground(message);
@@ -21,9 +23,11 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 }
 
 class ServicioNotificaciones {
-  static final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
-  static final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
-  
+  static final FirebaseMessaging _firebaseMessaging =
+      FirebaseMessaging.instance;
+  static final FlutterLocalNotificationsPlugin _localNotifications =
+      FlutterLocalNotificationsPlugin();
+
   static bool _inicializado = false;
   static String? _tokenFCM;
   static const FlutterSecureStorage _storage = FlutterSecureStorage();
@@ -35,19 +39,23 @@ class ServicioNotificaciones {
 
     try {
       // Solicitar permisos de Firebase
-      NotificationSettings settings = await _firebaseMessaging.requestPermission(
-        alert: true,
-        announcement: false,
-        badge: true,
-        carPlay: false,
-        criticalAlert: false,
-        provisional: false,
-        sound: true,
-      );
+      NotificationSettings settings = await _firebaseMessaging
+          .requestPermission(
+            alert: true,
+            announcement: false,
+            badge: true,
+            carPlay: false,
+            criticalAlert: false,
+            provisional: false,
+            sound: true,
+          );
 
       // Solicitar permisos de notificaciones locales
-      await _localNotifications.resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin>()?.requestNotificationsPermission();
+      await _localNotifications
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >()
+          ?.requestNotificationsPermission();
 
       if (settings.authorizationStatus != AuthorizationStatus.authorized) {
         print('❌ Permisos de notificaciones denegados');
@@ -98,16 +106,16 @@ class ServicioNotificaciones {
 
     const DarwinInitializationSettings initializationSettingsIOS =
         DarwinInitializationSettings(
-      requestAlertPermission: true,
-      requestBadgePermission: true,
-      requestSoundPermission: true,
-    );
+          requestAlertPermission: true,
+          requestBadgePermission: true,
+          requestSoundPermission: true,
+        );
 
     const InitializationSettings initializationSettings =
         InitializationSettings(
-      android: initializationSettingsAndroid,
-      iOS: initializationSettingsIOS,
-    );
+          android: initializationSettingsAndroid,
+          iOS: initializationSettingsIOS,
+        );
 
     await _localNotifications.initialize(
       initializationSettings,
@@ -127,7 +135,9 @@ class ServicioNotificaciones {
       );
 
       await _localNotifications
-          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >()
           ?.createNotificationChannel(channel);
     }
   }
@@ -136,20 +146,27 @@ class ServicioNotificaciones {
   static Future<void> _configurarHandlers() async {
     // Mensaje cuando la app está en foreground
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      print('📱 Mensaje recibido en foreground: ${message.notification?.title}');
+      print(
+        '📱 Mensaje recibido en foreground: ${message.notification?.title}',
+      );
       _mostrarNotificacionLocal(message);
     });
 
     // Mensaje cuando la app está en background pero no terminada
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      print('📱 App abierta desde notificación: ${message.notification?.title}');
+      print(
+        '📱 App abierta desde notificación: ${message.notification?.title}',
+      );
       _manejarTapNotificacion(message.data);
     });
 
     // Verificar si la app fue abierta desde una notificación
-    RemoteMessage? initialMessage = await _firebaseMessaging.getInitialMessage();
+    RemoteMessage? initialMessage = await _firebaseMessaging
+        .getInitialMessage();
     if (initialMessage != null) {
-      print('📱 App iniciada desde notificación: ${initialMessage.notification?.title}');
+      print(
+        '📱 App iniciada desde notificación: ${initialMessage.notification?.title}',
+      );
       _manejarTapNotificacion(initialMessage.data);
     }
   }
@@ -158,20 +175,21 @@ class ServicioNotificaciones {
   static Future<void> _mostrarNotificacionLocal(RemoteMessage message) async {
     const AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
-      'clinica_channel',
-      'Notificaciones de Clínica',
-      channelDescription: 'Canal para notificaciones de la aplicación de clínica',
-      importance: Importance.high,
-      priority: Priority.high,
-      showWhen: true,
-    );
+          'clinica_channel',
+          'Notificaciones de Clínica',
+          channelDescription:
+              'Canal para notificaciones de la aplicación de clínica',
+          importance: Importance.high,
+          priority: Priority.high,
+          showWhen: true,
+        );
 
     const DarwinNotificationDetails iOSPlatformChannelSpecifics =
         DarwinNotificationDetails(
-      presentAlert: true,
-      presentBadge: true,
-      presentSound: true,
-    );
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+        );
 
     const NotificationDetails platformChannelSpecifics = NotificationDetails(
       android: androidPlatformChannelSpecifics,
@@ -196,10 +214,10 @@ class ServicioNotificaciones {
   /// Manejar tap en notificación FCM
   static void _manejarTapNotificacion(Map<String, dynamic> data) {
     print('📱 Datos de notificación: $data');
-    
+
     final tipo = data['tipo'];
     final id = data['cita_id'] ?? data['examen_id'];
-    
+
     // Aquí puedes implementar navegación específica según el tipo
     switch (tipo) {
       case 'cita':
@@ -221,6 +239,7 @@ class ServicioNotificaciones {
   static Future<void> _registrarTokenEnBackend(String token) async {
     try {
       final res = await ApiNotificaciones.registrarDispositivo(token);
+      print('✅ RES: $res');
       if (res['ok'] == true) {
         print('✅ Token FCM registrado en backend');
       } else {
@@ -233,13 +252,15 @@ class ServicioNotificaciones {
 
   /// Verificar si las notificaciones están habilitadas
   static Future<bool> notificacionesHabilitadas() async {
-    NotificationSettings settings = await _firebaseMessaging.getNotificationSettings();
+    NotificationSettings settings = await _firebaseMessaging
+        .getNotificationSettings();
     return settings.authorizationStatus == AuthorizationStatus.authorized;
   }
 
   /// Solicitar permisos de notificaciones
   static Future<bool> solicitarPermisos() async {
-    NotificationSettings settings = await _firebaseMessaging.requestPermission();
+    NotificationSettings settings = await _firebaseMessaging
+        .requestPermission();
     return settings.authorizationStatus == AuthorizationStatus.authorized;
   }
 
@@ -257,16 +278,16 @@ class ServicioNotificaciones {
   }) async {
     const AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
-      'clinica_channel',
-      'Notificaciones de Clínica',
-      channelDescription: 'Recordatorios de citas y exámenes',
-      importance: Importance.max,
-      priority: Priority.max,
-      enableVibration: true,
-      playSound: true,
-      fullScreenIntent: true,
-      category: AndroidNotificationCategory.reminder,
-    );
+          'clinica_channel',
+          'Notificaciones de Clínica',
+          channelDescription: 'Recordatorios de citas y exámenes',
+          importance: Importance.max,
+          priority: Priority.max,
+          enableVibration: true,
+          playSound: true,
+          fullScreenIntent: true,
+          category: AndroidNotificationCategory.reminder,
+        );
 
     const DarwinNotificationDetails iOSPlatformChannelSpecifics =
         DarwinNotificationDetails();
@@ -286,7 +307,7 @@ class ServicioNotificaciones {
       scheduledDate,
       platformChannelSpecifics,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+      //uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
     );
   }
 
@@ -302,19 +323,22 @@ class ServicioNotificaciones {
     try {
       // 1. Obtener el token FCM
       String? token = await _firebaseMessaging.getToken();
-      
+
       if (token != null) {
         print('📱 Token FCM obtenido: ${token.substring(0, 20)}...');
-        
+        print('📱 Token FCM FCM: 8888888');
+
+        await _registrarTokenEnBackend(token);
+
         // 2. Guardar token localmente
         await _guardarTokenLocalmente(token);
         _tokenFCM = token;
-        
+
         // 3. Enviar al servidor si usuario está logueado
         if (await _usuarioLogueado()) {
           await _enviarTokenAlServidor(token);
         }
-        
+
         // 4. Configurar listeners
         _configurarListeners();
       }
@@ -328,13 +352,15 @@ class ServicioNotificaciones {
     try {
       // Recuperar token guardado localmente
       String? tokenGuardado = await _obtenerTokenGuardado();
-      
+      print('TokenToken: $tokenGuardado');
+
       if (tokenGuardado != null) {
         await _enviarTokenAlServidor(tokenGuardado);
       } else {
         // Si no hay token guardado, obtener uno nuevo
         await registrarDispositivo();
       }
+      //await registrarDispositivo();
     } catch (e) {
       print('❌ Error registrando dispositivo después del login: $e');
     }
@@ -344,14 +370,14 @@ class ServicioNotificaciones {
   static Future<void> _enviarTokenAlServidor(String token) async {
     try {
       final userToken = await storage.read(key: 'access');
-      
+
       if (userToken == null) {
         print('⚠️ No hay token de usuario, no se puede registrar dispositivo');
         return;
       }
 
       final response = await ApiNotificaciones.registrarDispositivo(token);
-      
+
       if (response['ok'] == true) {
         print('✅ Dispositivo registrado en servidor');
       } else {
@@ -415,18 +441,21 @@ class ServicioNotificaciones {
   }
 
   /// Mostrar notificación local cuando la app está en primer plano
-  static Future<void> _mostrarNotificacionLocalPush(RemoteMessage message) async {
-    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
-      'clinica_channel',
-      'Notificaciones de Clínica',
-      channelDescription: 'Notificaciones push de la clínica',
-      importance: Importance.max,
-      priority: Priority.max,
-      enableVibration: true,
-      playSound: true,
-      fullScreenIntent: true,
-      category: AndroidNotificationCategory.message,
-    );
+  static Future<void> _mostrarNotificacionLocalPush(
+    RemoteMessage message,
+  ) async {
+    const AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
+          'clinica_channel',
+          'Notificaciones de Clínica',
+          channelDescription: 'Notificaciones push de la clínica',
+          importance: Importance.max,
+          priority: Priority.max,
+          enableVibration: true,
+          playSound: true,
+          fullScreenIntent: true,
+          category: AndroidNotificationCategory.message,
+        );
 
     const DarwinNotificationDetails iosDetails = DarwinNotificationDetails();
 
@@ -447,7 +476,7 @@ class ServicioNotificaciones {
   static void _manejarToqueNotificacion(Map<String, dynamic> data) {
     // Aquí puedes navegar a pantallas específicas según el tipo de notificación
     print('📱 Datos de notificación: $data');
-    
+
     // Ejemplo de manejo según tipo
     if (data.containsKey('tipo')) {
       switch (data['tipo']) {
@@ -471,16 +500,15 @@ class ServicioNotificaciones {
   static Future<void> desactivarToken() async {
     try {
       final token = await _obtenerTokenGuardado();
-      
+
       if (token != null) {
         // TODO: Implementar desactivarToken en la API
         print('⚠️ Método desactivarToken no implementado en la API');
       }
-      
+
       // Limpiar token local
       await _storage.delete(key: _tokenKey);
       _tokenFCM = null;
-      
     } catch (e) {
       print('❌ Error desactivando token: $e');
     }
@@ -491,18 +519,19 @@ class ServicioNotificaciones {
 
   /// Método para probar notificaciones emergentes
   static Future<void> probarNotificacionEmergente() async {
-    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
-      'clinica_channel',
-      'Notificaciones de Clínica',
-      channelDescription: 'Notificación de prueba',
-      importance: Importance.max,
-      priority: Priority.max,
-      enableVibration: true,
-      playSound: true,
-      fullScreenIntent: true,
-      category: AndroidNotificationCategory.message,
-      ticker: 'Notificación de prueba',
-    );
+    const AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
+          'clinica_channel',
+          'Notificaciones de Clínica',
+          channelDescription: 'Notificación de prueba',
+          importance: Importance.max,
+          priority: Priority.max,
+          enableVibration: true,
+          playSound: true,
+          fullScreenIntent: true,
+          category: AndroidNotificationCategory.message,
+          ticker: 'Notificación de prueba',
+        );
 
     const DarwinNotificationDetails iosDetails = DarwinNotificationDetails();
 
@@ -520,19 +549,22 @@ class ServicioNotificaciones {
   }
 
   /// Mostrar notificación cuando la app está en background
-  static Future<void> mostrarNotificacionBackground(RemoteMessage message) async {
-    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
-      'clinica_channel',
-      'Notificaciones de Clínica',
-      channelDescription: 'Notificaciones push en background',
-      importance: Importance.max,
-      priority: Priority.max,
-      enableVibration: true,
-      playSound: true,
-      fullScreenIntent: true,
-      category: AndroidNotificationCategory.message,
-      ticker: 'Nueva notificación',
-    );
+  static Future<void> mostrarNotificacionBackground(
+    RemoteMessage message,
+  ) async {
+    const AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
+          'clinica_channel',
+          'Notificaciones de Clínica',
+          channelDescription: 'Notificaciones push en background',
+          importance: Importance.max,
+          priority: Priority.max,
+          enableVibration: true,
+          playSound: true,
+          fullScreenIntent: true,
+          category: AndroidNotificationCategory.message,
+          ticker: 'Nueva notificación',
+        );
 
     const DarwinNotificationDetails iosDetails = DarwinNotificationDetails();
 
