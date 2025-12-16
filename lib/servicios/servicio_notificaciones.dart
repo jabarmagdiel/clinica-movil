@@ -69,9 +69,10 @@ class ServicioNotificaciones {
       _tokenFCM = await _firebaseMessaging.getToken();
       print('🔑 Token FCM: $_tokenFCM');
 
-      // Registrar token en el backend
+      // Guardar token localmente para registrar después del login
       if (_tokenFCM != null) {
-        await _registrarTokenEnBackend(_tokenFCM!);
+        await _guardarTokenLocalmente(_tokenFCM!);
+        print('📱 Token FCM guardado localmente para registro posterior');
       }
 
       // Configurar handlers de mensajes
@@ -87,7 +88,8 @@ class ServicioNotificaciones {
       // Escuchar cambios de token
       _firebaseMessaging.onTokenRefresh.listen((newToken) {
         _tokenFCM = newToken;
-        _registrarTokenEnBackend(newToken);
+        _guardarTokenLocalmente(newToken);
+        print('🔄 Token FCM actualizado y guardado localmente');
       });
 
       _inicializado = true;
@@ -149,6 +151,13 @@ class ServicioNotificaciones {
       print(
         '📱 Mensaje recibido en foreground: ${message.notification?.title}',
       );
+
+      print('🔥🔥🔥 MENSAJE FCM RECIBIDO 🔥🔥🔥');
+      print('📱 Título: ${message.notification?.title}');
+      print('📱 Cuerpo: ${message.notification?.body}');
+      print('📱 Datos: ${message.data}');
+      print('🔥🔥🔥 FIN MENSAJE FCM 🔥🔥🔥');
+
       _mostrarNotificacionLocal(message);
     });
 
@@ -173,6 +182,8 @@ class ServicioNotificaciones {
 
   /// Mostrar notificación local cuando la app está en foreground
   static Future<void> _mostrarNotificacionLocal(RemoteMessage message) async {
+    print('🔔 Mostrando notificación local: ${message.notification?.title}');
+
     const AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
           'clinica_channel',
@@ -183,6 +194,19 @@ class ServicioNotificaciones {
           priority: Priority.high,
           showWhen: true,
         );
+
+    /*'clinica_channel',
+      'Notificaciones de Clínica',
+      channelDescription: 'Canal para notificaciones de la aplicación de clínica',
+      importance: Importance.max,
+      priority: Priority.max,
+      showWhen: true,
+      enableVibration: true,
+      playSound: true,
+      fullScreenIntent: true,
+      category: AndroidNotificationCategory.message,
+      ticker: 'Nueva notificación de clínica',
+    );*/
 
     const DarwinNotificationDetails iOSPlatformChannelSpecifics =
         DarwinNotificationDetails(
@@ -350,13 +374,17 @@ class ServicioNotificaciones {
   /// Registrar dispositivo después del login
   static Future<void> registrarDispositivoDespuesLogin() async {
     try {
+      print('🔄 Iniciando registro de dispositivo después del login...');
+
       // Recuperar token guardado localmente
       String? tokenGuardado = await _obtenerTokenGuardado();
       print('TokenToken: $tokenGuardado');
 
       if (tokenGuardado != null) {
+        print('📱 Usando token guardado: ${tokenGuardado.substring(0, 20)}...');
         await _enviarTokenAlServidor(tokenGuardado);
       } else {
+        print('⚠️ No hay token guardado, obteniendo uno nuevo...');
         // Si no hay token guardado, obtener uno nuevo
         await registrarDispositivo();
       }
@@ -415,29 +443,11 @@ class ServicioNotificaciones {
     return await _storage.read(key: _tokenKey);
   }
 
-  /// Configurar listeners para notificaciones
+  /// Configurar listeners adicionales
   static void _configurarListeners() {
-    // Escuchar cuando el token se refresca
-    _firebaseMessaging.onTokenRefresh.listen((newToken) async {
-      print('🔄 Token FCM actualizado');
-      _tokenFCM = newToken;
-      await _guardarTokenLocalmente(newToken);
-      if (await _usuarioLogueado()) {
-        await _enviarTokenAlServidor(newToken);
-      }
-    });
-
-    // Manejar notificaciones en primer plano
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      print('📲 Notificación en primer plano: ${message.notification?.title}');
-      _mostrarNotificacionLocal(message);
-    });
-
-    // Manejar cuando se toca la notificación
-    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      print('👆 Notificación tocada: ${message.data}');
-      _manejarToqueNotificacion(message.data);
-    });
+    // Los listeners principales ya están configurados en _configurarHandlers()
+    // Este método se mantiene para compatibilidad pero no agrega listeners duplicados
+    print('📡 Listeners de FCM ya configurados');
   }
 
   /// Mostrar notificación local cuando la app está en primer plano

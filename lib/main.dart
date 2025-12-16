@@ -36,6 +36,9 @@ void main() async {
 
   await notif.NotificationService.initialize();
 
+  // Inicializar servicio de notificaciones
+  //await ServicioNotificaciones.inicializar();
+
   runApp(const ClinicaApp());
 }
 

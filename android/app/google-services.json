@@ -7,6 +7,7 @@
   "client": [
     {
       "client_info": {
+
         "mobilesdk_app_id": "1:657758772198:android:9e85526284995e5d261427",
         "android_client_info": {
           "package_name": "com.example.clinica"
